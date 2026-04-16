@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>農民曆工具 · 黃曆查詢</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', 'Helvetica Neue', sans-serif;
+            background: #f7f3e9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            margin: 0;
+            color: #2e241f;
+        }
+
+        .calendar-card {
+            max-width: 680px;
+            width: 100%;
+            background: #fffef9;
+            border-radius: 36px 36px 32px 32px;
+            box-shadow: 0 20px 40px -10px rgba(90, 60, 30, 0.25), 0 8px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #efe5d5;
+            transition: all 0.2s;
+        }
+
+        .card-header {
+            background: #b3450b; /* 傳統朱砂紅 */
+            background: linear-gradient(145deg, #b3450b 0%, #a03a0a 100%);
+            padding: 28px 24px 20px 24px;
+            color: #fef7e9;
+            position: relative;
+        }
+
+        .card-header::after {
+            content: '⬩ 黃曆 ⬩';
+            position: absolute;
+            bottom: -12px;
+            right: 30px;
+            background: #ecd8b4;
+            color: #5d3a1a;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            padding: 6px 18px;
+            border-radius: 40px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid #cfb690;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: 6px;
+            margin-bottom: 16px;
+            text-shadow: 2px 2px 0 #6b2c06;
+        }
+
+        .date-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .date-panel input[type="date"] {
+            background: #fff3e0;
+            border: 1px solid #bc8f5a;
+            padding: 12px 18px;
+            border-radius: 60px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #2e241f;
+            flex: 2 1 200px;
+            outline: none;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+            transition: 0.2s;
+        }
+
+        .date-panel input[type="date"]:focus {
+            border-color: #b3450b;
+            box-shadow: 0 0 0 3px rgba(180, 70, 10, 0.2);
+        }
+
+        .today-btn {
+            background: #fdebd1;
+            border: 1.5px solid #9b6e42;
+            color: #5a3c24;
+            padding: 11px 28px;
+            border-radius: 60px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            flex: 0 0 auto;
+            letter-spacing: 1px;
+        }
+
+        .today-btn:hover {
+            background: #fad9b3;
+            border-color: #8b4f22;
+            color: #3e2b18;
+            transform: scale(0.98);
+        }
+
+        .content {
+            padding: 32px 24px 28px 24px;
+        }
+
+        /* 主要資訊卡片 */
+        .info-block {
+            background: #fefcf6;
+            border-radius: 28px;
+            padding: 22px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 5px 15px rgba(200, 160, 110, 0.1), 0 2px 0 #e2d4c0 inset;
+            border: 1px solid #efe0cd;
+        }
+
+        .solar-lunar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 16px;
+            font-size: 1.3rem;
+        }
+
+        .gregorian {
+            font-weight: 600;
+            color: #4d3622;
+            background: #f7ede1;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+        }
+
+        .weekday {
+            background: #eedbcb;
+            padding: 6px 20px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #4a2f18;
+        }
+
+        .lunar-main {
+            font-size: 1.9rem;
+            font-weight: 650;
+            color: #2f2016;
+            line-height: 1.3;
+            margin: 15px 0 8px 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .lunar-main .chinese-date {
+            background: linear-gradient(135deg, #f1e5d2, #faf1e2);
+            padding: 5px 20px 5px 20px;
+            border-radius: 60px;
+            border-left: 5px solid #b94a10;
+        }
+
+        .shengxiao {
+            font-size: 1.3rem;
+            background: #dccdbb;
+            padding: 5px 20px;
+            border-radius: 60px;
+            color: #342217;
+        }
+
+        .ganzhi-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 25px;
+            background: #efe3d5;
+            border-radius: 50px;
+            padding: 12px 22px;
+            margin-top: 16px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #362b20;
+        }
+
+        .ganzhi-row span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ganzhi-row i {
+            font-style: normal;
+            color: #9d5d2b;
+            font-weight: 400;
+        }
+
+        /* 宜忌雙欄 */
+        .yiji-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .yi-box, .ji-box {
+            flex: 1 1 200px;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 18px 16px;
+            box-shadow: 0 8px 12px -8px rgba(140, 100, 60, 0.15);
+            border: 1px solid #eadbc8;
+        }
+
+        .yi-box {
+            border-top: 6px solid #258f4b;
+        }
+        .ji-box {
+            border-top: 6px solid #c05a3b;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .yi-box .section-title { color: #1d6b38; }
+        .ji-box .section-title { color: #aa4230; }
+
+        .tag-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .tag-list li {
+            background: #f4ede3;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #2e241a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid #dacbbc;
+        }
+        .yi-box .tag-list li {
+            background: #e1f3e4;
+            border-color: #98c0a3;
+        }
+        .ji-box .tag-list li {
+            background: #ffe6df;
+            border-color: #dbb2a5;
+        }
+
+        /* 明細網格 */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px 20px;
+            background: #faf3ea;
+            border-radius: 28px;
+            padding: 22px 20px;
+            margin: 20px 0 20px 0;
+            border: 1px solid #e0cfba;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .detail-label {
+            font-size: 1rem;
+            color: #826b51;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .detail-value {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: #35281d;
+            line-height: 1.3;
+            background: #fffcf5;
+            padding: 6px 12px;
+            border-radius: 30px;
+            border: 1px solid #eddbbb;
+            display: inline-block;
+            width: fit-content;
+            min-width: 100px;
+        }
+
+        .extra-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 15px 30px;
+            background: #f3e8db;
+            border-radius: 40px;
+            padding: 18px 22px;
+            margin-top: 18px;
+            font-size: 1.1rem;
+        }
+
+        .pengzu {
+            color: #43523b;
+            font-weight: 550;
+            background: #fef7e0;
+            padding: 5px 16px;
+            border-radius: 40px;
+            border-left: 5px solid #88876a;
+        }
+
+        .jieqi {
+            background: #bda78b;
+            color: #281e14;
+            padding: 5px 25px;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #b2967a;
+            margin-top: 20px;
+            font-size: 0.95rem;
+            border-top: 1px dashed #dacbb8;
+            padding-top: 18px;
+        }
+
+        .empty-value {
+            opacity: 0.6;
+            font-style: italic;
+        }
+    </style>
+    <!-- 使用 lunar-javascript 萬年曆庫 (1.6.8) -->
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
+</head>
+<body>
+<div class="calendar-card">
+    <div class="card-header">
+        <div class="header-title">農民曆 · 擇吉</div>
+        <div class="date-panel">
+            <input type="date" id="datePicker" value="">
+            <button class="today-btn" id="todayBtn">📅 今日</button>
+        </div>
+    </div>
+
+    <div class="content" id="calendarContent">
+        <!-- 所有動態生成的資料會插入到對應元素中 -->
+        <div class="info-block">
+            <div class="solar-lunar">
+                <span class="gregorian" id="gregorianDisplay"></span>
+                <span class="weekday" id="weekDisplay"></span>
+            </div>
+            <div class="lunar-main">
+                <span class="chinese-date" id="lunarDateDisplay"></span>
+                <span class="shengxiao" id="shengxiaoDisplay"></span>
+            </div>
+            <div class="ganzhi-row" id="ganzhiDisplay">
+                <!-- 年月干支由js填入 -->
+            </div>
+        </div>
+
+        <!-- 宜忌區域 -->
+        <div class="yiji-grid">
+            <div class="yi-box">
+                <div class="section-title">✅ 宜</div>
+                <ul class="tag-list" id="yiList"></ul>
+            </div>
+            <div class="ji-box">
+                <div class="section-title">❌ 忌</div>
+                <ul class="tag-list" id="jiList"></ul>
+            </div>
+        </div>
+
+        <!-- 詳細資訊網格 -->
+        <div class="detail-grid">
+            <div class="detail-item"><span class="detail-label">沖煞</span><span class="detail-value" id="chongSha"></span></div>
+            <div class="detail-item"><span class="detail-label">財神</span><span class="detail-value" id="caiShen"></span></div>
+            <div class="detail-item"><span class="detail-label">喜神</span><span class="detail-value" id="xiShen"></span></div>
+            <div class="detail-item"><span class="detail-label">福神</span><span class="detail-value" id="fuShen"></span></div>
+            <div class="detail-item"><span class="detail-label">祿神</span><span class="detail-value" id="luShen"></span></div>
+            <div class="detail-item"><span class="detail-label">胎神</span><span class="detail-value" id="taiShen"></span></div>
+            <div class="detail-item"><span class="detail-label">星宿</span><span class="detail-value" id="xiuName"></span></div>
+            <div class="detail-item"><span class="detail-label">五行納音</span><span class="detail-value" id="naYin"></span></div>
+            <div class="detail-item"><span class="detail-label">建除十二</span><span class="detail-value" id="jianChu"></span></div>
+        </div>
+
+        <!-- 彭祖百忌 + 節氣 -->
+        <div class="extra-row">
+            <span class="pengzu" id="pengzuText"></span>
+            <span class="jieqi" id="jieqiText"></span>
+        </div>
+
+        <div class="footer-note">
+            ⚡ 每日宜忌 · 傳統黃曆 · 順時而為
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // 簡體→繁體對照表（針對 lunar-javascript 函式庫的輸出字元）
+        const S2T_MAP = {
+          '猪':'豬','马':'馬','鸡':'雞','龙':'龍',
+          '仓':'倉','库':'庫','厨':'廚','灶':'竈',
+          '纳':'納','开':'開','动':'動',
+          '词':'詞','讼':'訟','经':'經','络':'絡','针':'針',
+          '补':'補','坏':'壞','毕':'畢','结':'結','网':'網',
+          '铸':'鑄','钗':'釵','钏':'釧','问':'問','订':'訂',
+          '齐':'齊','斋':'齋','归':'歸','宁':'寧','绘':'繪',
+          '扫':'掃','挂':'掛','贡':'貢','财':'財','药':'藥',
+          '竖':'豎','桩':'樁','灯':'燈','炉':'爐','赁':'賃',
+          '佣':'傭','进':'進','处':'處','满':'滿','执':'執',
+          '闭':'閉','长':'長','涧':'澗','头':'頭','疮':'瘡',
+          '带':'帶','乡':'鄉','难':'難','织':'織','机':'機',
+          '虚':'虛','张':'張','肠':'腸','丧':'喪','会':'會',
+          '颠':'顛','祸':'禍','门':'門','厕':'廁','栖':'棲',
+          '东':'東','惊':'驚','蛰':'蟄','灵':'靈','签':'簽',
+          '树':'樹','贮':'貯','储':'儲','馀':'餘','枢':'樞',
+          '养':'養','断':'斷','蚁':'蟻',
+          '诸':'諸','谢':'謝','谷':'穀','获':'獲','缝':'縫',
+          '临':'臨','证':'證','积':'積','怀':'懷','垦':'墾',
+          '产':'產','猎':'獵','栽':'栽','种':'種','置':'置',
+          '启':'啟','钻':'鑽','锁':'鎖','链':'鏈',
+          '娄':'婁','参':'參','轸':'軫',
+          '赴':'赴','塑':'塑','雕':'雕',
+          '盖':'蓋','敌':'敵','远':'遠','内':'內',
+          '强':'強','弱':'弱','伏':'伏','藏':'藏',
+          '嗣':'嗣','祈':'祈','福':'福','祭':'祭','祀':'祀',
+          '移':'移','徙':'徙','柩':'柩',
+          '塞':'塞','穴':'穴',
+        };
+        function s2t(str) {
+          if (!str) return str;
+          return str.replace(/[\u4e00-\u9fff]/g, ch => S2T_MAP[ch] || ch);
+        }
+
+        // 確保 lunar 庫已加載
+        if (typeof Solar === 'undefined') {
+            alert('錯誤：無法載入萬年曆函式庫，請重新整理頁面。');
+            return;
+        }
+
+        // DOM 元素
+        const datePicker = document.getElementById('datePicker');
+        const todayBtn = document.getElementById('todayBtn');
+
+        // 顯示欄位
+        const gregorianSpan = document.getElementById('gregorianDisplay');
+        const weekSpan = document.getElementById('weekDisplay');
+        const lunarDateSpan = document.getElementById('lunarDateDisplay');
+        const shengxiaoSpan = document.getElementById('shengxiaoDisplay');
+        const ganzhiDiv = document.getElementById('ganzhiDisplay');
+
+        const yiList = document.getElementById('yiList');
+        const jiList = document.getElementById('jiList');
+
+        const chongSha = document.getElementById('chongSha');
+        const caiShen = document.getElementById('caiShen');
+        const xiShen = document.getElementById('xiShen');
+        const fuShen = document.getElementById('fuShen');
+        const luShen = document.getElementById('luShen');
+        const taiShen = document.getElementById('taiShen');
+        const xiuName = document.getElementById('xiuName');
+        const naYin = document.getElementById('naYin');
+        const jianChu = document.getElementById('jianChu');
+        const pengzuText = document.getElementById('pengzuText');
+        const jieqiText = document.getElementById('jieqiText');
+
+        // 輔助：格式化二位數字
+        function pad2(n) { return n.toString().padStart(2, '0'); }
+
+        // 取得今天 YYYY-MM-DD
+        function getTodayDateStr() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1;
+            const day = d.getDate();
+            return year + '-' + pad2(month) + '-' + pad2(day);
+        }
+
+        // 設定日期選擇器為今天
+        function setTodayToPicker() {
+            datePicker.value = getTodayDateStr();
+        }
+
+        // 更新整個畫面的農民曆資訊
+        function updateCalendarFromDatePicker() {
+            if (!datePicker.value) {
+                setTodayToPicker(); // 萬一沒有值
+            }
+
+            const dateStr = datePicker.value; // yyyy-mm-dd
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return;
+
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const day = parseInt(parts[2], 10);
+
+            try {
+                // 轉換為 Solar 物件 (公曆)
+                const solar = Solar.fromYmd(year, month, day);
+                // 取得對應農曆
+                const lunar = solar.getLunar();
+
+                // ----- 公曆/星期 -----
+                const weekChinese = solar.getWeekInChinese();     // 如 "星期二"
+                gregorianSpan.innerText = `${year}年${month}月${day}日`;
+                weekSpan.innerText = weekChinese;
+
+                // ----- 農曆日期 + 生肖 -----
+                const lunarMonthStr = lunar.getMonthInChinese();   // 正月, 閏二月 etc
+                const lunarDayStr = lunar.getDayInChinese();       // 初一, 十五 etc
+                const yearGanZhi = lunar.getYearInGanZhi();        // 乙巳
+                const shengxiao = lunar.getYearShengXiao();        // 蛇
+                lunarDateSpan.innerText = `${yearGanZhi}年 ${lunarMonthStr}${lunarDayStr}`;
+                shengxiaoSpan.innerText = `生肖 · ${s2t(shengxiao)}`;
+
+                // ----- 干支 (年月日) -----
+                const monthGanZhi = lunar.getMonthInGanZhi();      // 戊寅
+                const dayGanZhi = lunar.getDayInGanZhi();          // 庚申
+                ganzhiDiv.innerHTML = `
+                    <span><i>年柱</i> ${yearGanZhi}</span>
+                    <span><i>月柱</i> ${monthGanZhi}</span>
+                    <span><i>日柱</i> ${dayGanZhi}</span>
+                `;
+
+                // ----- 宜忌 (陣列轉li) -----
+                const yiArr = lunar.getDayYi() || [];
+                const jiArr = lunar.getDayJi() || [];
+                yiList.innerHTML = yiArr.length ? yiArr.map(y => `<li>${s2t(y)}</li>`).join('') : '<li class="empty-value">無</li>';
+                jiList.innerHTML = jiArr.length ? jiArr.map(j => `<li>${s2t(j)}</li>`).join('') : '<li class="empty-value">無</li>';
+
+                // ----- 沖煞 (getDayChongDesc 通常回傳 "沖猴 煞北") -----
+                const chongDesc = s2t(lunar.getDayChongDesc()) || '－';
+                chongSha.innerText = chongDesc;
+
+                // ----- 吉神方位 -----
+                caiShen.innerText = s2t(lunar.getDayPositionCaiDesc()) || '--';
+                xiShen.innerText = s2t(lunar.getDayPositionXiDesc()) || '--';
+                fuShen.innerText = s2t(lunar.getDayPositionFuDesc()) || '--';
+                luShen.innerText = s2t(lunar.getDayLu()) || '--';
+
+                // ----- 胎神、星宿、納音、建除 -----
+                taiShen.innerText = s2t(lunar.getDayPositionTai()) || '--';
+                // 星宿
+                const xiuRaw = s2t(lunar.getXiu()) || '';
+                xiuName.innerText = xiuRaw ? xiuRaw + '宿' : '--';
+                naYin.innerText = s2t(lunar.getDayNaYin()) || '--';
+                jianChu.innerText = s2t(lunar.getZhiXing()) || '--';
+
+                // ----- 彭祖百忌 (句子) -----
+                const pengzuGan = s2t(lunar.getPengZuGan()) || '';
+                const pengzuZhi = s2t(lunar.getPengZuZhi()) || '';
+                const pengzu = [pengzuGan, pengzuZhi].filter(Boolean).join(' ');
+                pengzuText.innerText = pengzu ? `彭祖百忌 · ${pengzu}` : '彭祖百忌 · 無';
+
+                // ----- 節氣 (若為null則顯示空白) -----
+                const jieqi = s2t(lunar.getJieQi()) || '';
+                jieqiText.innerText = jieqi ? `⛅ 節氣 · ${jieqi}` : '⛅ 節氣 · 今日無';
+
+            } catch (e) {
+                console.warn('農民曆更新失敗', e);
+                // 簡單顯示錯誤，不影響整體
+                gregorianSpan.innerText = '資料載入異常';
+            }
+        }
+
+        // 初始化事件
+        function init() {
+            // 設定預設日期為今天
+            setTodayToPicker();
+            // 第一次更新
+            updateCalendarFromDatePicker();
+
+            // 監聽日期變更
+            datePicker.addEventListener('change', function() {
+                updateCalendarFromDatePicker();
+            });
+
+            // 今天按鈕
+            todayBtn.addEventListener('click', function() {
+                setTodayToPicker();
+                updateCalendarFromDatePicker();
+            });
+        }
+
+        // 執行初始化
+        init();
+    })();
+</script>
+</body>
+</html>
